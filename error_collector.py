@@ -1,7 +1,7 @@
 
 __all__ = ['SqoopError', 'HiveError', 'PythonError']
 
-
+from typing import Dict
 
 class SqoopError:
 
@@ -36,9 +36,15 @@ class HiveError:
         # return code
         return self.__ExecutionError
 
-
+    @property
+    def exceptions(self) -> Dict[str, str]:
+        return {
+            'SemanticException' : self.SemanticException,
+            'FileNotFoundException' : self.FileNotFoundException,
+            'OutOfMemoryError' : self.OutOfMemoryError,
+            'ExecutionError'     : self.ExecutionError
+        }
     
-
 
 class PythonError:
 

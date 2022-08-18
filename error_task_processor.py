@@ -11,7 +11,7 @@ import numpy as np
 
 import subprocess
 
-from typing import Dict, List, Tuple, Optional, Final, Union, TypeVar
+from typing import Dict, List, Tuple, Optional, Union, TypeVar
 Pandas_DataFrame = TypeVar(pd.DataFrame)
 
 from error_collector import *
@@ -27,23 +27,6 @@ logging.basicConfig(
 )
 
 
-'''
-def signleton(cls_):
-
-    _instances = {}
-
-    def get_instance(*args, **kwargs):
-
-        if cls_ not in _instances:
-            instances[cls_] = cls_(*args, **kwargs)
-        return instances[cls_]
-
-    return get_instance()
-'''
-
-
-log = logging.getLogger(__name__)
-
 base_path = os.path.expanduser(os.environ.get('ETL_HOME', '/mapr/mapr.daegu.go.kr/ETL'))
 
 AIRFLOW_LOG_FOLDER = os.path.join(os.path.expanduser(os.environ.get('AIRFLOW_HOME', '/lake_etl/airflow')), 'logs')
@@ -52,10 +35,8 @@ MPSTAT_PREP_FOLDER = os.path.join(base_path, 'mpstat_prep')
 MPSTAT_LOG_FOLDER = os.path.join(base_path, 'mpstat_log')
 UPTIME_PREP_FOLDER = os.path.join(base_path, 'uptime_prep')
 
-# '/mapr/mapr.daegu.go.kr/ETL/lake_etl/airflow/logs'
 
 
-'''
 def main(excution_date: Union[int, str]):
 
     obj = AirflowErrorTaskFinder(datetime=excution_date, dag_id=os.environ["AIRFLOW_CTX_DAG_ID"])
@@ -73,12 +54,15 @@ def main(excution_date: Union[int, str]):
     # task_nm = os.environ["AIRFLOW_CTX_TASK_ID"].split('.')[0]
 
 
-    error_finder = AirflowErrorTaskFinder('20220117', 'STEP_2_DW_1_DIL_DBIG')
+    # error_finder = AirflowErrorTaskFinder('20220117', 'STEP_2_DW_1_DIL_DBIG')
+    error_finder = AirflowErrorTaskFinder(datetime='20220117', dag_id=os.environ["AIRFLOW_CTX_DAG_ID"])
     error_finder.find_error_task()
 
     error_tracer = ErrorTracerCreator().create_error_tracer(error_finder)
-    error_tracer.error_trace()
-'''
+    error_tracer.get_readable_paths()
+
+    b = error_tracer.error_trace()
+
 
 
 class AirflowErrorTaskFinder:
@@ -236,7 +220,7 @@ class AirflowErrorTaskFinder:
 
 
     @property
-    def inheritance_vars(self):
+    def inheritance_vars(self): 
 
         if self.err_tasks is None:
             raise Exception('먼저 find_error_task 함수를 실행시켜주세요.')
@@ -338,7 +322,7 @@ class ErrorTracerCreator():
     # 팩토리 메서드 패턴을 이용하여 상속받는 하위 클래스의 인스턴스를 리턴
     def create_error_tracer(self, err_finder : AirflowErrorTaskFinder) -> ErrorTracer:
 
-        logging.info('실행하는 프로그램은 %s입니다', {err_finder.meta_data.get(err_finder.dag_id).get('execute_program')})
+        logging.info(f"실행하는 프로그램은 {err_finder.meta_data.get(err_finder.dag_id).get('execute_program')} 입니다")
 
         if AirflowErrorTaskFinder.meta_data.get(err_finder.dag_id).get('execute_program') == 'Sqoop':
             return SqoopErrorTracer(**err_finder.inheritance_vars)
@@ -377,7 +361,7 @@ class ErrorTracer(metaclass=ABCMeta):
 
     def get_readable_paths(self):
 
-        should_read_paths = []
+        should_read_paths = {}
 
         self.err_tasks_paths = sorted(self.err_tasks_paths)
 
@@ -389,7 +373,7 @@ class ErrorTracer(metaclass=ABCMeta):
                     should_read_task = error_path
                 
                 if error_path == self.err_tasks_paths[-1]:
-                    should_read_paths.append(should_read_task)
+                    should_read_paths[err_task] = should_read_task
 
         self.readable_paths = should_read_paths
 
@@ -708,12 +692,34 @@ class HiveErrorTracer(ErrorTracer):
 
         self.hive_parser = HiveError()
 
-    def error_trace(self):
-        
-        for path in self.readable_paths:
-            with open(path) as f:
-                line = f.readline()
 
+    def error_trace(self):
+
+        result_df = pd.DataFrame(columns=['dag_id', 'task_id', 'error', 'error_line', 'log_path'])
+
+        for task_id, path in self.readable_paths.items():
+            
+            with open(path) as f:
+
+                check_lines = []
+
+                for line in f:
+                    if ('error' in line.lower()) or ('exception' in line.lower()):
+                        check_lines.append(line.strip())
+            
+                for line in check_lines:
+                    for k, v in self.hive_parser.exceptions.items():
+                        if v in line:
+                            result_df = result_df.append({
+                                'dag_id' : self.dag_id,
+                                'task_id' : task_id,
+                                'error' : k,
+                                'error_line' : line,
+                                'log_path' : path
+                            }, ignore_index=True)
+                            break
+        else:
+            return result_df
 
 class SqoopErrorTracer(ErrorTracer):
 
@@ -735,46 +741,43 @@ class SqoopErrorTracer(ErrorTracer):
 
         self.sqoop_parser = SqoopError()
 
+
     def error_trace(self):
 
-        for path in self.readable_paths:
-            with open(path) as f:
-                
-                check_lines = []
-                
+        result_df = pd.DataFrame(columns=['std_ymd', 'dag_id', 'task_id', 'error', 'error_line', 'log_path'])
+
+        for task_id, path in self.readable_paths.items():
+            
+            with open(path, 'r') as f:
+
+                check_lines: List[str] = []
+
                 for line in f:
                     if ('error' in line.lower()) or ('exception' in line.lower()):
                         check_lines.append(line.strip())
-                
-                exceptions = [
-                    error_tracer.hive_parser.SemanticException,
-                    error_tracer.hive_parser.FileNotFoundException,
-                    error_tracer.hive_parser.OutOfMemoryError,
-                    error_tracer.hive_parser.ExecutionError
-                ]
-                
-                
-                for line in check_lines:
-                    
-                    for exception in exceptions:
-                        if exception in line:
-                            logging.info(line)
-                            logging.info(exception)
-                            break
 
+            # exception, error 단어가 있는 check_lines : List[str]
+
+            flag = False
+
+            for line in check_lines:
+
+                if flag == True:
+                    break
+
+                for k, v in self.hive_parser.exceptions.items():
+
+                    if v in line:
+                        result_df = result_df.append({
+                            'std_ymd' : self.datetime,
+                            'dag_id' : self.dag_id,
+                            'task_id' : task_id,
+                            'error' : k,
+                            'error_line' : line,
+                            'log_path' : path
+                            }, ignore_index=True
+                        )
+
+                        flag = True
         
-'''
-class TaskSyntaxErrorTracer(ErrorTracer):
-
-    def __init__(
-        self,
-        datetime:Optional[int, str] = None,
-        dag_id:Optional[str] = None,
-        base_path: str = ''
-    ):
-
-        super(PythonErrorTracer, self).__init__(*args, **kwargs)
-
-    def python_mem_err_trace(self):
-        pass
-'''
+        return result_df
