@@ -5,8 +5,31 @@ from typing import Dict
 
 class SqoopError:
 
-    __type_1 = 'N killed'
-    __type_2 = 'Read-only file system'
+    __EOFException = 'java.io.EOFException'
+    __FileAlreadyExistsException = 'org.apache.hadoop.mapred.FileAlreadyExistsException'
+    __ParsingError = 'Error parsing'
+
+    @property
+    def EOFException(self):
+        return self.__EOFException
+
+    @property
+    def FileAlreadyExistsException(self):
+        return self.__FileAlreadyExistsException
+
+    @property
+    def ParsingError(self):
+        return self.__ParsingError
+
+    @property
+    def exceptions(self) -> Dict[str, str]:
+        return {
+            'EOFException' : self.EOFException,
+            'FileAlreadyExistsException' : self.FileAlreadyExistsException,
+            'ParsingError' : self.ParsingError
+        }
+    
+
 
 
 class HiveError:
@@ -18,22 +41,18 @@ class HiveError:
 
     @property
     def SemanticException(self):
-        # return code   
         return self.__SemanticException
 
     @property
     def FileNotFoundException(self):
-        # return code   
         return self.__FileNotFoundException
 
     @property
     def OutOfMemoryError(self):
-        # return code
         return self.__OutOfMemoryError
 
     @property
     def ExecutionError(self):
-        # return code
         return self.__ExecutionError
 
     @property
@@ -42,7 +61,7 @@ class HiveError:
             'SemanticException' : self.SemanticException,
             'FileNotFoundException' : self.FileNotFoundException,
             'OutOfMemoryError' : self.OutOfMemoryError,
-            'ExecutionError'     : self.ExecutionError
+            'ExecutionError' : self.ExecutionError
         }
     
 
