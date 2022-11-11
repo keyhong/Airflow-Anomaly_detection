@@ -1,3 +1,4 @@
+#!/bin/usr/env python3
 
 __all__ = ['SqoopError', 'HiveError', 'PythonError']
 

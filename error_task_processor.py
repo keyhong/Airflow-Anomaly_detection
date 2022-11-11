@@ -1,8 +1,10 @@
-from __future__ import annotations
+#!/bin/usr/env python3
 
 import shlex
+
 from datetime import datetime
-import logging
+from detection_logger import logger
+
 import os
 import sys
 
@@ -19,21 +21,6 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum, auto
 
 from error_collector import *
-
-logging.basicConfig(
-    format = '%(asctime)s : %(levelname)s : %(message)s',
-    datefmt = '%Y-%m-%d %H:%M:%S',
-    level = logging.INFO
-)
-
-
-base_path = os.path.expanduser(os.environ.get('ETL_HOME', '/mapr/mapr.daegu.go.kr/ETL'))
-
-AIRFLOW_LOG_FOLDER = os.path.join(os.path.expanduser(os.environ.get('AIRFLOW_HOME', '/lake_etl/airflow')), 'logs')
-UPTIME_LOG_FOLDER = os.path.join(base_path, 'uptime_log')
-MPSTAT_PREP_FOLDER = os.path.join(base_path, 'mpstat_prep')
-MPSTAT_LOG_FOLDER = os.path.join(base_path, 'mpstat_log')
-UPTIME_PREP_FOLDER = os.path.join(base_path, 'uptime_prep')
 
 def main(excution_date: Union[int, str], dag_id: str):
 
@@ -64,121 +51,117 @@ def main(excution_date: Union[int, str], dag_id: str):
     insert_df = spark_session.createDataFrame(insert_df)
     insert_df.write.insertInto('mig.test', overwrite=False)
 
-    logging.info('시스템 정상 종료!')
+    logger.info('시스템 정상 종료!')
 
 class AirflowErrorTaskFinder:
 
     def __new__(cls, *args, **kwargs):
 
-        # SQOOP_ERROR_FOLDER: Final[str] = f"{os.environ['ETL_HOME']}/log/lake_log/mart"
-        DW_ERROR_FOLDER: Final[str] = f"{os.environ['ETL_HOME']}/log/lake_log/dw"
-        DM_ERROR_FOLDER: Final[str] = f"{os.environ['ETL_HOME']}/log/lake_log/mart"
-
         cls.meta_data: Dict[str, Dict[str, str]] = {
             "STEP_1_SQOOP_1_DIL" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Sqoop',
                 "prefix_str": "/",
                 "postfix_str": ".sqoop"
             },
             "STEP_1_SQOOP_1_DIL_DBIG" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Sqoop',
                 "prefix_str": "/",
                 "postfix_str": ".sqoop"
             },
             "STEP_1_SQOOP_2_DCN" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Sqoop',
                 "prefix_str": "/",
                 "postfix_str": ".sqoop"
             },
             "STEP_2_DW_1_DIL" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_2_DW_1_DIL_ATTR" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_2_DW_1_DIL_DBIG" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_2_DW_1_DIL_DBIG_ATTR" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_2_DW_2_DCN" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_3_MART_1_ANLS" : {
-                "error_log_path": DM_ERROR_FOLDER,
+                "error_log_path": DM_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_3_MART_2_CDA_PPRCS" : {
-                "error_log_path": DM_ERROR_FOLDER,
+                "error_log_path": DM_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_3_MART_2_CDA_LRN" : {
-                "error_log_path": DM_ERROR_FOLDER,
+                "error_log_path": DM_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_3_MART_2_CDA_OPER" : {
-                "error_log_path": DM_ERROR_FOLDER,
+                "error_log_path": DM_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_4_SQOOP_1_DIL_DBIG_DCN" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Sqoop',
                 "prefix_str": "/c_",
                 "postfix_str": ".sqoop"
             },
             "STEP_4_SQOOP_1_DIL_DCN" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Sqoop',
                 "prefix_str": "/",
                 "postfix_str": ".sqoop"
             },
             "STEP_4_SQOOP_2_ANLS_DCN" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Sqoop',
                 "prefix_str": "/",
                 "postfix_str": ".sqoop"
             },
             "STEP_5_SOSS_1_OPER" : {
-                "error_log_path": DM_ERROR_FOLDER,
+                "error_log_path": DM_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_5_SOSS_2_LRN" : {
-                "error_log_path": DM_ERROR_FOLDER,
+                "error_log_path": DM_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
             },
             "STEP_7_META" : {
-                "error_log_path": DW_ERROR_FOLDER,
+                "error_log_path": DW_ERROR_LOG_DIR,
                 "execute_program" : 'Hive',
                 "prefix_str": "/c_",
                 "postfix_str": "_D_01"
@@ -324,7 +307,7 @@ class ErrorTracerCreator():
     # 팩토리 메서드 패턴을 이용하여 상속받는 하위 클래스의 인스턴스를 리턴
     def create_error_tracer(self, err_finder : AirflowErrorTaskFinder) -> ErrorTracer:
 
-        logging.info(f"실행하는 프로그램은 {err_finder.meta_data.get(err_finder.dag_id).get('execute_program')} 입니다")
+        logger.info(f"실행하는 프로그램은 {err_finder.meta_data.get(err_finder.dag_id).get('execute_program')} 입니다")
 
         if AirflowErrorTaskFinder.meta_data.get(err_finder.dag_id).get('execute_program') == 'Sqoop':
             return SqoopErrorTracer(**err_finder.inheritance_vars)

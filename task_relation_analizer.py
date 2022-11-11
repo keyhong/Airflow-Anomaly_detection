@@ -1,3 +1,5 @@
+#!/bin/usr/env python3
+
 import os
 from typing import List, Tuple
 
@@ -9,12 +11,11 @@ warnings.filterwarnings(action='ignore')
 
 from collections import Counter
 
-__all__ = ["TaskRelationAnalizer"]
+__all__ = ['TaskRelationAnalize']
 
 class TaskRelationAnalizer:
 
-    # __dag_abs_path = f"{os.environ['AIRFLOW_HOME']}/dags"
-    __dag_abs_path = '/home/user/b2en/dev/anomaly_detection/airflow_dags'
+    __dag_abs_path = os.path.join(os.environ['AIRFLOW_HOME'], dags)
 
     def __init__(
         self,
@@ -34,25 +35,26 @@ class TaskRelationAnalizer:
         self.__task_id = task_id
 
     @classmethod
-    def get_all_py_dag_paths(cls):
-        """$AIRFLOW_HOME/dags 안에 있는 모든 파일의 절대 경로를 반환하는 함수"""
+    def get_python_dag_paths(cls) -> List[str]:
+        """$AIRFLOW_HOME/dags 안에 있는 모든 파일의 절대 경로를 반환하는 함수
+        
+        Returns
+        -------
+        python_dag_paths : List[str]
+           실행시킬 파이썬 DAG들의 절대경로 리스트
+        """
 
-        files = os.listdir(cls.__dag_abs_path)
+        # 파일 형식이 .py인 파일만 추출
+        dag_files = [ dag_file for dag_file in os.listdir(cls.__dag_abs_path) if os.path.splitext(dag_file)[1] == '.py' ]
         
-        all_dags = []
-        
-        # 제외할 task (STEP_9_ANOMALY_1_PREP : 이상탐지 프로그램) 제거
+        # 제외할 DAG (STEP_9_ANOMALY_1_PREP : 이상탐지 프로그램) 제거
         except_dag_lst = [ 'STEP_9_ANOMALY_1_PREP', 'STEP_9_2_TEST' ]
+
+        # 제외된 DAG가 아닌 DAG들의 절대 경로
+        python_dag_paths = [ os.path.join(cls.__dag_abs_path, dag_file) for dag_file in dag_files if os.path.splitext(dag_file)[0] not in except_dag_lst ]
+        python_dag_paths.sort()
         
-        # 제외된 task가 아니면서 & 파일 형식이 .py인 파일만 추출
-        for python_dag in files:
-            
-            if ( os.path.splitext(python_dag)[0] not in except_dag_lst ) & ( os.path.splitext(python_dag)[-1] == '.py' ):
-                all_dags.append(cls.__dag_abs_path + '/' + python_dag)
-        else:
-            all_dags.sort()
-        
-        return all_dags
+        return python_dag_paths
 
     def analyze_relation(self, dags_paths: List[str]):
 
@@ -168,17 +170,17 @@ class TaskRelationAnalizer:
             
 
     @classmethod
-    def comment_preprocess(cls, lines):
+    def comment_preprocess(cls, lines: List[str]) -> List[str]:
         
         ''' 로그 파일에서 주석은 제거하기 '''
-        lines = cls._remove_case_1(lines)
-        lines = cls._remove_case_2(lines)
-        lines = cls._remove_case_3(lines)
+        lines = cls._delete_python_comment_1(lines)
+        lines = cls._delete_python_comment_2(lines)
+        lines = cls._delete_python_comment_3(lines)
 
         return lines
 
     @classmethod
-    def _remove_case_1(cls, lines):
+    def _delete_python_comment_1(cls, lines):
         ''' 여러줄 주석이 한 줄에 끝나는 경우인 line 제거 '''
 
         # 여러행 주석 종류가  """ ~ CODE ~ """ 인 경우 (단, 한 줄에 """로 시작해서 """로 끝나는 경우)
@@ -199,7 +201,7 @@ class TaskRelationAnalizer:
 
 
     @classmethod
-    def _remove_case_2(cls, lines):
+    def _delete_python_comment_2(cls, lines) -> List[str]:
         ''' 여러줄 주석이 여러 줄에 끝나는 경우 line 제거 '''
 
         from collections import namedtuple
@@ -228,9 +230,8 @@ class TaskRelationAnalizer:
         
         return lines
             
-
     @classmethod
-    def _remove_case_3(cls, lines):
+    def _delete_python_comment_3(cls, lines) -> List[str]:
         ''' 한 줄 주석인 경우 line 제거 '''
 
         comment_case_5 = [ idx for idx in range(len(lines)) if lines[idx].startswith('#') ]
@@ -279,7 +280,7 @@ class TaskRelationAnalizer:
         for task in a.all_df.task:
             result.extend(list(task))
 
-    def _recursive_dag_find(self, start_dag: str, err_lst: List) -> List:
+    def _recursive_dag_find(self, start_dag: str, err_lst: List[str]):
         """
         ** Call-By-Reference
         """

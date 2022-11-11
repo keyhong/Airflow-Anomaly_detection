@@ -1,44 +1,20 @@
+#!/bin/usr/env python3
+
+# 환경세팅 기본 폴더 절대경로
+AIRFLOW_HOME: str = os.environ.get('AIRFLOW_HOME', '~/airflow') # 사용자 환경변수에서 AIRFLOW_HOME 탐색
+ETL_HOME: str = cfg_reader.get_value('BASE_DIR', 'ETL_HOME')
 
 
-# setting
+# 로그 폴더 절대경로
+AIRFLOW_TASK_LOG_DIR: str = cfg_reader.get_value('LOG_DIR', 'AIRFLOW_TASK_LOG_DIR')
+
+UPTIME_LOG_DIR: str = cfg_reader.get_value('LOG_DIR', 'UPTIME_LOG_DIR')
+MPSTAT_LOG_DIR: str = cfg_reader.get_value('LOG_DIR', 'MPSTAT_LOG_DIR')
+
+DW_ERROR_LOG_DIR: cfg_reader.get_value('LOG_DIR', 'DW_ERROR_LOG_DIR')
+DM_ERROR_LOG_DIR: cfg_reader.get_value('LOG_DIR', 'DM_ERROR_LOG_DIR')
 
 
- os.path.expanduser(conf.get_mandatory_value('core', 'DAGS_FOLDER'))
-
-
-AIRFLOW_LOG_FOLDER: str = ''
-UPTIME_LOG_FOLDER: str = ''
-MPSTAT_LOG_FOLDER: str = ''
-UPTIME_PREP_PATH: str = ''
-MPSTAT_PREP_PATH: str = ''
-
-MPSTAT_PREP_FOLDER
-
-def expand_env_var(env_var):
-    """
-    Expands (potentially nested) env vars by repeatedly applying
-    `expandvars` and `expanduser` until interpolation stops having
-    any effect.
-    """
-    if not env_var:
-        return env_var
-    while True:
-        interpolated = os.path.expanduser(os.path.expandvars(str(env_var)))
-        if interpolated == env_var:
-            return interpolated
-        else:
-            env_var = interpolated
-
-
-def get_airflow_home():
-    return expand_env_var(os.environ.get('AIRFLOW_HOME', '~/airflow'))
-
-AIRFLOW_HOME = get_airflow_home()
-
-
-os.environ.get('ETL_HOME', '~/airflow')
-
-f"{os.environ['ETL_HOME']}/mapr/mapr.daegu.go.kr/ETL/lake_etl/airflow/logs"
-
-
-conf = 
+# 로그 전처리 폴더 절대경로
+UPTIME_PREP_PATH: str = cfg_reader.get_value('LOG_PREP_DIR', 'UPTIME_PREP_DIR')
+MPSTAT_PREP_PATH: str = cfg_reader.get_value('LOG_PREP_DIR', 'MPSTAT_PREP_DIR')

@@ -1,5 +1,6 @@
-import logging
+#!/bin/usr/env python3
 
+from detection_logger import logger
 
 def recursive_dag_find(start_dag: str, err_lst: list):
     """
@@ -14,7 +15,7 @@ def recursive_dag_find(start_dag: str, err_lst: list):
         elif unique_df[unique_df.dag == start_dag].iloc[0, 2] is np.nan:
             return
     except NameError:
-        logging.info('NameError : unique_df is not exist.')
+        logger.info('NameError : unique_df is not exist.')
     
     next_trigger = unique_df[unique_df.dag == start_dag].iloc[0, 2]
 

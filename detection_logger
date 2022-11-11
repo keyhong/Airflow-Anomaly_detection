@@ -1,0 +1,13 @@
+config_reader.py 테스트 시작
+
+config_reader.py 테스트 시작
+
+section : "FOLDER_PATH"을 확인합니다.
+request_option : "ETL_HOME"을 확인합니다.
+respose : "'/mapr/mapr.daegu.go.kr/ETL'"을 정상적으로 받아 왔습니다.
+
+Input Parameter section "NO_Section" is not exist.
+section : "NO_Section"는 없습니다.
+
+config_reader.py 테스트 시작
+
