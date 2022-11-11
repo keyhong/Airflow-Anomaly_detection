@@ -1,4 +1,13 @@
-#!/bin/usr/env python3
+#!/usr/bin/env python3
+# coding: utf-8
+
+######################################################
+#    프로그램명    : settings.py
+#    작성자        : Gyu Won Hong
+#    작성일자      : 2022.11.11
+#    파라미터      : None
+#    설명          : 
+######################################################
 
 # 환경세팅 기본 폴더 절대경로
 AIRFLOW_HOME: str = os.environ.get('AIRFLOW_HOME', '~/airflow') # 사용자 환경변수에서 AIRFLOW_HOME 탐색

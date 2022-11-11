@@ -1,14 +1,23 @@
-#!/bin/usr/env python3
+#!/usr/bin/env python3
+# coding: utf-8
 
-from typing import TypeVar
-pandas_DataFrame = TypeVar('pandas.core.frame.DataFrame')
-numpy_ndarray = TypeVar('pandas.ndarray')
+######################################################
+#    프로그램명    : model.py
+#    작성자        : Gyu Won Hong
+#    작성일자      : 2022.11.11
+#    파라미터      : None
+#    설명          : 
+######################################################
 
 import pandas as pd
 import numpy as np
 
 from sklearn.cluster import MeanShift
 from collections import Counter
+
+from typing import TypeVar
+pandas_DataFrame = TypeVar(pd.DataFrmae)
+numpy_ndarray = TypeVar(np.array)
 
 class MeanShiftModel:
 

@@ -1,4 +1,13 @@
-#!/bin/usr/env python3
+#!/usr/bin/env python3
+# coding: utf-8
+
+######################################################
+#    프로그램명    : error_task_processor.py
+#    작성자        : Gyu Won Hong
+#    작성일자      : 2022.11.11
+#    파라미터      : None
+#    설명          : 
+######################################################
 
 import shlex
 

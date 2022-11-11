@@ -1,4 +1,13 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+# coding: utf-8
+
+######################################################
+#    프로그램명    : log_tokenizer.py
+#    작성자        : Gyu Won Hong
+#    작성일자      : 2022.11.11
+#    파라미터      : None
+#    설명          : 
+######################################################
 
 import warnings
 warnings.filterwarnings(action='ignore') 
