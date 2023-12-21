@@ -3,7 +3,7 @@
 ====================================
 Airflow-operator-anomaly-detection
 ====================================
-Airflow DAG나 Operator의 네이밍의 상관성을 분석하여, Error Task에 대한 이상 탐지 및 오퍼레이터 failure를 부여하는 프로그램
+Airflow DAG나 Operator의 네이밍의 상관성을 분석하여, Error Task에 대한 이상을 탐지하였을 때 네이밍이 상관관계가 있는 오퍼레이터를 Fail & Skip 시키는 프로그램입니다.
 
 Idea
 ----------
